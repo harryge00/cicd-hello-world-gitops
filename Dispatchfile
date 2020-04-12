@@ -1,0 +1,26 @@
+resource "gitops-git": {
+  type: "git"
+  param url: "https://github.com/harryge00/cicd-hello-world-gitops"
+}
+
+task "deploy": {
+  inputs: ["docker-image", "gitops-git"]
+  steps: [
+    {
+      name: "update-gitops-repo"
+      image: "mesosphere/update-gitops-repo:v1.0"
+      workingDir: "/workspace/gitops-git"
+      args: [
+        "-git-revision=$(context.git.commit)",
+        "-substitute=imageName=hyge/hello-world-dispatch@$(inputs.resources.docker-image.digest)"
+      ]
+    }
+  ]
+}
+
+actions: [
+  {
+    tasks: ["build", "deploy"]
+    on push branches: ["master"]
+  }
+]
